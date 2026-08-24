@@ -1,0 +1,4 @@
+interface:
+  display_name: "Register New TestCompatHygiene Version"
+  short_description: "Release and register a new TestCompatHygiene package version"
+  default_prompt: "Use $register-new-version to choose, release, and register the next TestCompatHygiene.jl version."
