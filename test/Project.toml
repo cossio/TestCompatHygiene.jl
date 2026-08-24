@@ -1,7 +1,14 @@
-# Deliberately declares no [compat]: every dep here (Test) is already owned by
-# the root Project.toml, and this package's own check forbids repeating such
-# bounds -- workspace members share one manifest, so a repeated bound would be
-# intersected with the root's and silently narrow the real resolve.
+# [compat] here bounds test-only deps exclusively (Aqua, ExplicitImports):
+# names the root Project.toml already owns (Test) must not be repeated, and
+# this package's own check forbids it -- workspace members share one manifest,
+# so a repeated bound would be intersected with the root's and silently narrow
+# the real resolve.
 [deps]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestCompatHygiene = "b0582c03-59af-4651-a67d-b5bc031813b7"
+
+[compat]
+Aqua = "0.8.14"
+ExplicitImports = "1.15"
