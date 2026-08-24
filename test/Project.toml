@@ -1,0 +1,7 @@
+# Deliberately declares no [compat]: every dep here (Test) is already owned by
+# the root Project.toml, and this package's own check forbids repeating such
+# bounds -- workspace members share one manifest, so a repeated bound would be
+# intersected with the root's and silently narrow the real resolve.
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestCompatHygiene = "b0582c03-59af-4651-a67d-b5bc031813b7"

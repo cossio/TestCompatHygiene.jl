@@ -1,0 +1,6 @@
+name = "NoTestProject"
+uuid = "00000000-0000-0000-0000-000000000001"
+version = "1.0.0"
+
+[compat]
+julia = "1.12"

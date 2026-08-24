@@ -1,0 +1,16 @@
+name = "TestCompatHygiene"
+uuid = "b0582c03-59af-4651-a67d-b5bc031813b7"
+authors = ["Jorge Fernandez-de-Cossio-Diaz <j.cossio.diaz@gmail.com>"]
+version = "1.0.0-DEV"
+
+[deps]
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+TOML = "1"
+Test = "1"
+julia = "1.12"
+
+[workspace]
+projects = ["test"]

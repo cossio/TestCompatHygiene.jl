@@ -1,0 +1,19 @@
+name = "Logomaker"
+uuid = "3e22dfff-eee4-477b-ac6a-6f7f49e5ccf0"
+version = "2.0.4-DEV"
+
+[workspace]
+projects = ["test", "docs"]
+
+[deps]
+CondaPkg = "992eb4ea-22a4-4c89-a5bb-47a3300528ab"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+LazyArtifacts = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+
+[compat]
+CondaPkg = "0.2"
+DataFrames = "1"
+LazyArtifacts = "1.11"
+PythonCall = "0.9"
+julia = "1.12"
