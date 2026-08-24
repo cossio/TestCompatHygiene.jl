@@ -68,13 +68,13 @@ end
 end
 
 @testset "root_owned_names" begin
-    root = Dict{String,Any}(
+    root = Dict{String, Any}(
         "name" => "Foo",
-        "deps" => Dict{String,Any}("A" => "uuid-a"),
-        "compat" => Dict{String,Any}("B" => "1", "julia" => "1.12"),
+        "deps" => Dict{String, Any}("A" => "uuid-a"),
+        "compat" => Dict{String, Any}("B" => "1", "julia" => "1.12"),
     )
     @test root_owned_names(root) == Set(["Foo", "A", "B", "julia"])
-    @test root_owned_names(Dict{String,Any}()) == Set{String}()
+    @test root_owned_names(Dict{String, Any}()) == Set{String}()
 end
 
 @testset "module and path inputs" begin
@@ -104,7 +104,7 @@ end
 
 function quiet_run(f)
     # swallow and assert the expected warning; run f under a QuietTestSet
-    @test_logs (:warn, r"already owns") match_mode=:any begin
+    return @test_logs (:warn, r"already owns") match_mode = :any begin
         @testset QuietTestSet "quiet" begin
             f()
         end
