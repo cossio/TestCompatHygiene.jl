@@ -36,9 +36,12 @@ public test_all, test_test_compat, check_test_compat, offending_compat_entries, 
 # path, so every check is unit-testable against fixture directories.
 function project_dir(pkg::Module)
     dir = pkgdir(pkg)
-    dir === nothing && throw(ArgumentError(
-        "cannot determine the package directory of module $pkg; " *
-        "pass the path to the package root instead"))
+    dir === nothing && throw(
+        ArgumentError(
+            "cannot determine the package directory of module $pkg; " *
+                "pass the path to the package root instead"
+        )
+    )
     return dir
 end
 project_dir(path::AbstractString) = String(path)
@@ -51,8 +54,8 @@ anything it already pins in [compat] (including `julia`), and the package itself
 """
 function root_owned_names(root::AbstractDict)
     owned = Set{String}()
-    union!(owned, keys(get(root, "deps", Dict{String,Any}())))
-    union!(owned, keys(get(root, "compat", Dict{String,Any}())))
+    union!(owned, keys(get(root, "deps", Dict{String, Any}())))
+    union!(owned, keys(get(root, "compat", Dict{String, Any}())))
     haskey(root, "name") && push!(owned, String(root["name"]))
     return owned
 end
@@ -66,7 +69,7 @@ function offending_compat_entries(root_path::AbstractString, test_path::Abstract
     isfile(test_path) || return String[]
     root = TOML.parsefile(root_path)
     tst = TOML.parsefile(test_path)
-    test_compat = keys(get(tst, "compat", Dict{String,Any}()))
+    test_compat = keys(get(tst, "compat", Dict{String, Any}()))
     return sort!(collect(intersect(test_compat, root_owned_names(root))))
 end
 
@@ -78,7 +81,7 @@ any, `@warn` a diagnostic naming each offender alongside what the root
 declares. Returns the sorted offender names (empty means clean). This is the
 non-throwing core of [`test_test_compat`](@ref).
 """
-function check_test_compat(pkg::Union{Module,AbstractString})
+function check_test_compat(pkg::Union{Module, AbstractString})
     dir = project_dir(pkg)
     root_path = joinpath(dir, "Project.toml")
     test_path = joinpath(dir, "test", "Project.toml")
@@ -87,17 +90,21 @@ function check_test_compat(pkg::Union{Module,AbstractString})
     if !isempty(offenders)
         root = TOML.parsefile(root_path)
         tst = TOML.parsefile(test_path)
-        root_compat = get(root, "compat", Dict{String,Any}())
+        root_compat = get(root, "compat", Dict{String, Any}())
         io = IOBuffer()
-        println(io, "test/Project.toml declares [compat] for ", length(offenders),
-                " name(s) the root Project.toml already owns.")
-        println(io, "Workspace members share one manifest, so these bounds are ",
-                "intersected and silently narrow the root's.")
+        println(
+            io, "test/Project.toml declares [compat] for ", length(offenders),
+            " name(s) the root Project.toml already owns."
+        )
+        println(
+            io, "Workspace members share one manifest, so these bounds are ",
+            "intersected and silently narrow the root's."
+        )
         println(io, "Remove them from test/Project.toml:")
         for k in offenders
             rb = get(root_compat, k, nothing)
             root_desc = rb === nothing ? "root lists it as a dep, unbounded" :
-                        string("root declares ", repr(rb))
+                string("root declares ", repr(rb))
             println(io, "    ", k, " = ", repr(tst["compat"][k]), "   (", root_desc, ")")
         end
         @warn String(take!(io))
@@ -114,8 +121,8 @@ Test that `test/Project.toml` declares no [compat] entry for a name the root
 including `julia`, or the package's own name). On violation the test fails and
 a warning names each offending entry and what the root declares.
 """
-function test_test_compat(pkg::Union{Module,AbstractString})
-    @testset "test/Project.toml compat hygiene" begin
+function test_test_compat(pkg::Union{Module, AbstractString})
+    return @testset "test/Project.toml compat hygiene" begin
         # Comparing against String[] makes the failure output name the offenders.
         @test check_test_compat(pkg) == String[]
     end
@@ -131,7 +138,7 @@ future checks will be added as new keywords, without breaking this call.
 Currently included checks:
 - `test_compat`: [`test_test_compat`](@ref)
 """
-function test_all(pkg::Union{Module,AbstractString}; test_compat::Bool = true)
+function test_all(pkg::Union{Module, AbstractString}; test_compat::Bool = true)
     test_compat && test_test_compat(pkg)
     return nothing
 end
