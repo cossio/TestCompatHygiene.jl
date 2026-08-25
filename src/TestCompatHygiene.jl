@@ -24,13 +24,15 @@ using MyPkg
 import TestCompatHygiene
 TestCompatHygiene.test_all(MyPkg)
 ```
+
+The public API is [`test_all`](@ref), and nothing else.
 """
 module TestCompatHygiene
 
 using Test: @testset, @test
 import TOML
 
-public test_all, test_test_compat, check_test_compat, offending_compat_entries, root_owned_names
+public test_all
 
 # Resolve the package directory from a module (via `pkgdir`) or accept a plain
 # path, so every check is unit-testable against fixture directories.
@@ -79,7 +81,8 @@ end
 Compute the offending `test/Project.toml` [compat] entries for `pkg` and, if
 any, `@warn` a diagnostic naming each offender alongside what the root
 declares. Returns the sorted offender names (empty means clean). This is the
-non-throwing core of [`test_test_compat`](@ref).
+non-throwing core of the compat check, usable from a plain script or CI job
+that has no `Test` context. Not `public`: callable, but outside semver.
 """
 function check_test_compat(pkg::Union{Module, AbstractString})
     dir = project_dir(pkg)
@@ -136,7 +139,7 @@ root). Each check is `@testset`-based and can be disabled by its keyword;
 future checks will be added as new keywords, without breaking this call.
 
 Currently included checks:
-- `test_compat`: [`test_test_compat`](@ref)
+- `test_compat`: `test_test_compat`, the `test/Project.toml` compat check
 """
 function test_all(pkg::Union{Module, AbstractString}; test_compat::Bool = true)
     test_compat && test_test_compat(pkg)
