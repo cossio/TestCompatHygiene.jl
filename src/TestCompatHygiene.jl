@@ -24,13 +24,25 @@ using MyPkg
 import TestCompatHygiene
 TestCompatHygiene.test_all(MyPkg)
 ```
+
+The public API is [`test_all`](@ref) -- the entry point, and all most users
+need -- plus [`check_test_compat`](@ref), which returns the offenders as data
+and needs no `Test` context, for use outside a test suite.
 """
 module TestCompatHygiene
 
 using Test: @testset, @test
 import TOML
 
-public test_all, test_test_compat, check_test_compat, offending_compat_entries, root_owned_names
+# Public API is deliberately small. `test_all` is the entry point (Aqua-style);
+# `check_test_compat` is the only other name with a distinct capability -- it
+# returns data and does not need a `Test` context, so it is usable from a plain
+# CI script. Everything else is an implementation detail: `test_test_compat` is
+# currently just `test_all` with one check, and `offending_compat_entries` /
+# `root_owned_names` take paths and parsed TOML rather than a package. Marking a
+# name public is a semver promise that is cheap to add later and breaking to
+# take back, so they stay internal until something actually needs them.
+public test_all, check_test_compat
 
 # Resolve the package directory from a module (via `pkgdir`) or accept a plain
 # path, so every check is unit-testable against fixture directories.
@@ -79,7 +91,8 @@ end
 Compute the offending `test/Project.toml` [compat] entries for `pkg` and, if
 any, `@warn` a diagnostic naming each offender alongside what the root
 declares. Returns the sorted offender names (empty means clean). This is the
-non-throwing core of [`test_test_compat`](@ref).
+non-throwing core of the compat check, usable from a plain script or CI job
+that has no `Test` context.
 """
 function check_test_compat(pkg::Union{Module, AbstractString})
     dir = project_dir(pkg)
@@ -136,7 +149,7 @@ root). Each check is `@testset`-based and can be disabled by its keyword;
 future checks will be added as new keywords, without breaking this call.
 
 Currently included checks:
-- `test_compat`: [`test_test_compat`](@ref)
+- `test_compat`: `test_test_compat`, the `test/Project.toml` compat check
 """
 function test_all(pkg::Union{Module, AbstractString}; test_compat::Bool = true)
     test_compat && test_test_compat(pkg)
