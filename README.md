@@ -65,21 +65,21 @@ bare `isempty`.
 
 ## API
 
-The public API is two names:
+The public API is one name:
 
 - `TestCompatHygiene.test_all(pkg; test_compat = true)` — run every check.
   Each check is `@testset`-based and can be disabled by its keyword; future
-  checks will be added as new keywords, without breaking this call. This is
-  the entry point; for most users it is the only name needed.
-- `TestCompatHygiene.check_test_compat(pkg)` — the non-throwing core: returns
-  the sorted offender names (empty means clean) and warns, without `@test`.
-  Useful in scripts or CI outside a test suite.
+  checks will be added as new keywords, without breaking this call.
 
-Both accept either a module (the package directory is derived via `pkgdir`) or
-a plain path to a package root, so checks are unit-testable against fixture
+It accepts either a module (the package directory is derived via `pkgdir`) or a
+plain path to a package root, so checks are unit-testable against fixture
 directories.
 
-Everything else (`test_test_compat`, `offending_compat_entries`,
-`root_owned_names`) is internal and not covered by semver. Marking a name
-public is cheap to add in a minor release and breaking to take back, so these
-stay internal until there is a concrete reason to promote them.
+Everything else — `test_test_compat`, `check_test_compat`,
+`offending_compat_entries`, `root_owned_names` — is internal: callable and
+documented, but not covered by semver. `check_test_compat(pkg)` is the useful
+one of those if you want the offenders as data outside a test suite: it returns
+the sorted offender names (empty means clean) and warns, without `@test`.
+
+Marking a name public is cheap to add in a minor release and breaking to take
+back, so nothing is promoted until there is a concrete reason.

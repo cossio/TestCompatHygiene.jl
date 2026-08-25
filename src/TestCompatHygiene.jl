@@ -25,16 +25,14 @@ import TestCompatHygiene
 TestCompatHygiene.test_all(MyPkg)
 ```
 
-The public API is [`test_all`](@ref) -- the entry point, and all most users
-need -- plus [`check_test_compat`](@ref), which returns the offenders as data
-and needs no `Test` context, for use outside a test suite.
+The public API is [`test_all`](@ref), and nothing else.
 """
 module TestCompatHygiene
 
 using Test: @testset, @test
 import TOML
 
-public test_all, check_test_compat
+public test_all
 
 # Resolve the package directory from a module (via `pkgdir`) or accept a plain
 # path, so every check is unit-testable against fixture directories.
@@ -84,7 +82,7 @@ Compute the offending `test/Project.toml` [compat] entries for `pkg` and, if
 any, `@warn` a diagnostic naming each offender alongside what the root
 declares. Returns the sorted offender names (empty means clean). This is the
 non-throwing core of the compat check, usable from a plain script or CI job
-that has no `Test` context.
+that has no `Test` context. Not `public`: callable, but outside semver.
 """
 function check_test_compat(pkg::Union{Module, AbstractString})
     dir = project_dir(pkg)
