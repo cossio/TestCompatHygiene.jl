@@ -34,14 +34,6 @@ module TestCompatHygiene
 using Test: @testset, @test
 import TOML
 
-# Public API is deliberately small. `test_all` is the entry point (Aqua-style);
-# `check_test_compat` is the only other name with a distinct capability -- it
-# returns data and does not need a `Test` context, so it is usable from a plain
-# CI script. Everything else is an implementation detail: `test_test_compat` is
-# currently just `test_all` with one check, and `offending_compat_entries` /
-# `root_owned_names` take paths and parsed TOML rather than a package. Marking a
-# name public is a semver promise that is cheap to add later and breaking to
-# take back, so they stay internal until something actually needs them.
 public test_all, check_test_compat
 
 # Resolve the package directory from a module (via `pkgdir`) or accept a plain
