@@ -33,6 +33,21 @@ synthesizes a `[compat]` entry for every direct dep that lacks one (the
 CompatHelper convention) — pinning deps the root already bounds, and shadowing
 the root's declarations from then on.
 
+## Installation
+
+The package is registered in the [General registry](https://github.com/JuliaRegistries/General).
+Since it is a test helper, add it to your test environment:
+
+```julia
+julia --project=test -e 'using Pkg; Pkg.add("TestCompatHygiene")'
+```
+
+or, from the Pkg REPL (press `]`) with the test project active:
+
+```
+pkg> add TestCompatHygiene
+```
+
 ## Usage
 
 Add `TestCompatHygiene` to your test dependencies, then, mirroring Aqua.jl:
