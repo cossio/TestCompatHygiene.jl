@@ -19,6 +19,12 @@ root `Project.toml` already owns:
 Bounds for genuinely test-only dependencies (Aqua, SafeTestsets,
 ExplicitImports, ...) are legitimate and are not flagged.
 
+The check only applies to packages whose root `[compat]` requires Julia 1.12 or
+later, for example `julia = "1.12"`. For a package whose `julia` compat still
+admits an older version (say `julia = "1.10"`, or no `julia` entry at all) the
+check is a no-op: it passes trivially and logs an `@info` message explaining
+why. See [When the check applies](#when-the-check-applies) below.
+
 ## Why this matters
 
 When the root and test projects form one workspace, Pkg **intersects** compat
@@ -32,6 +38,27 @@ at `/test`, it treats `test/Project.toml` as its own project file and
 synthesizes a `[compat]` entry for every direct dep that lacks one (the
 CompatHelper convention) — pinning deps the root already bounds, and shadowing
 the root's declarations from then on.
+
+## When the check applies
+
+`[workspace]` is a Julia 1.12 feature. Julia 1.11 and older ignore it and
+resolve `test/Project.toml` into its own manifest, without inheriting the
+root's compat bounds. For a package that still supports those versions, a
+bound repeated in `test/Project.toml` is *required*, not redundant: removing it
+would leave the test environment unbounded there. This is the concern raised in
+[JuliaTesting/Aqua.jl#392](https://github.com/JuliaTesting/Aqua.jl/pull/392),
+and the check follows the resolution adopted there.
+
+The gate is decided from the package's declared `julia` compat, not from the
+Julia version running the tests: the check applies only when the root
+`[compat]` admits no version older than 1.12, so that there is no way the
+package manager resolves the test project without the workspace. Until then the
+check is a no-op, logging:
+
+```
+┌ Info: TestCompatHygiene's test/Project.toml compat check is a no-op: the root Project.toml declares `julia = "1.10"` and so admits Julia versions older than 1.12. [...] The check will apply once the `julia` compat requires 1.12 or later.
+└ @ TestCompatHygiene
+```
 
 ## Installation
 
@@ -90,7 +117,7 @@ It accepts either a module (the package directory is derived via `pkgdir`) or a
 plain path to a package root, so checks are unit-testable against fixture
 directories.
 
-Everything else — `test_test_compat`, `check_test_compat`,
+Everything else — `test_test_compat`, `check_test_compat`, `requires_julia_1_12`,
 `offending_compat_entries`, `root_owned_names` — is internal: callable and
 documented, but not covered by semver. `check_test_compat(pkg)` is the useful
 one of those if you want the offenders as data outside a test suite: it returns
