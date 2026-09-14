@@ -17,6 +17,12 @@ CompatHelper convention).
 Legitimately allowed: bounds for test-only deps (Aqua, SafeTestsets, ...),
 i.e. anything the root project does not already name.
 
+The check only applies to packages whose root `[compat]` requires Julia 1.12 or
+later. Older Julia versions ignore `[workspace]` and resolve `test/Project.toml`
+into its own manifest without inheriting the root's bounds, so a package that
+still supports Julia 1.11 *needs* the repeated entries. For such packages the
+check is a no-op that logs an `@info` message explaining why.
+
 Usage, mirroring Aqua.jl:
 
 ```julia
@@ -30,6 +36,7 @@ The public API is [`test_all`](@ref), and nothing else.
 module TestCompatHygiene
 
 using Test: @testset, @test
+using Pkg.Versions: semver_spec
 import TOML
 
 public test_all
@@ -63,6 +70,26 @@ function root_owned_names(root::AbstractDict)
 end
 
 """
+    requires_julia_1_12(root::AbstractDict) -> Bool
+
+Whether the root project's `[compat]` entry for `julia` admits no version older
+than 1.12. A missing or malformed entry admits every version, so it returns
+`false`. Only then is the `[workspace]` guaranteed to be honoured: Julia 1.11
+and older resolve `test/Project.toml` on its own, so the compat check must not
+apply to packages that still support them (see JuliaTesting/Aqua.jl#392).
+"""
+function requires_julia_1_12(root::AbstractDict)
+    julia_compat = get(get(root, "compat", Dict{String, Any}()), "julia", nothing)
+    julia_compat isa AbstractString || return false
+    spec = try
+        semver_spec(String(julia_compat))
+    catch
+        return false
+    end
+    return isempty(spec ∩ semver_spec("0 - 1.11"))
+end
+
+"""
     offending_compat_entries(root_path, test_path) -> Vector{String}
 
 Sorted names that `test_path` bounds but `root_path` already owns.
@@ -83,15 +110,36 @@ any, `@warn` a diagnostic naming each offender alongside what the root
 declares. Returns the sorted offender names (empty means clean). This is the
 non-throwing core of the compat check, usable from a plain script or CI job
 that has no `Test` context. Not `public`: callable, but outside semver.
+
+The check is a no-op, returning `String[]` after an `@info` message, unless the
+root `[compat]` requires Julia 1.12 or later (see [`requires_julia_1_12`](@ref)):
+on older Julia the repeated bounds are required, not redundant.
 """
 function check_test_compat(pkg::Union{Module, AbstractString})
     dir = project_dir(pkg)
     root_path = joinpath(dir, "Project.toml")
     test_path = joinpath(dir, "test", "Project.toml")
+
+    root = TOML.parsefile(root_path)
+    if !requires_julia_1_12(root)
+        julia_compat = get(get(root, "compat", Dict{String, Any}()), "julia", nothing)
+        declared = julia_compat === nothing ? "has no `julia` entry in [compat]" :
+            string("declares `julia = ", repr(julia_compat), "`")
+        @info string(
+            "TestCompatHygiene's test/Project.toml compat check is a no-op: ",
+            "the root Project.toml ", declared, " and so admits Julia versions ",
+            "older than 1.12. Those versions ignore [workspace] and resolve ",
+            "test/Project.toml into its own manifest without inheriting the ",
+            "root's compat bounds, so bounds repeated there are required rather ",
+            "than redundant. The check will apply once the `julia` compat ",
+            "requires 1.12 or later."
+        )
+        return String[]
+    end
+
     offenders = offending_compat_entries(root_path, test_path)
 
     if !isempty(offenders)
-        root = TOML.parsefile(root_path)
         tst = TOML.parsefile(test_path)
         root_compat = get(root, "compat", Dict{String, Any}())
         io = IOBuffer()
@@ -123,6 +171,11 @@ Test that `test/Project.toml` declares no [compat] entry for a name the root
 `Project.toml` already owns (any root dep, anything in the root's [compat]
 including `julia`, or the package's own name). On violation the test fails and
 a warning names each offending entry and what the root declares.
+
+The test passes trivially, logging an `@info` message, for packages whose root
+`[compat]` still admits a Julia version older than 1.12, since those versions
+ignore `[workspace]` and require the repeated bounds. It starts to apply once
+the root declares, for example, `julia = "1.12"`.
 """
 function test_test_compat(pkg::Union{Module, AbstractString})
     return @testset "test/Project.toml compat hygiene" begin
