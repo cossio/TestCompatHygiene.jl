@@ -26,6 +26,9 @@ const EXPECTED = Dict(
     "HMMER" => String[],
     # no test/Project.toml at all is trivially clean
     "no_test_project" => String[],
+    # a root with no `name` (a project that is not a package) still owns its
+    # deps and [compat]; there is simply no package name to own on top
+    "nameless_root" => ["Statistics"],
 )
 
 @testset verbose = true "offending_compat_entries on fixtures" begin
@@ -129,6 +132,9 @@ end
     )
     @test root_owned_names(root) == Set(["Foo", "A", "B", "julia"])
     @test root_owned_names(Dict{String, Any}()) == Set{String}()
+    # without a `name` field only the deps and [compat] keys are owned
+    delete!(root, "name")
+    @test root_owned_names(root) == Set(["A", "B", "julia"])
 end
 
 @testset "module and path inputs" begin
